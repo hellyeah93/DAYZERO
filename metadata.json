@@ -1,0 +1,6 @@
+{
+  "name": "DAYZERO — Cross-Platform Productivity & Accountability System",
+  "description": "Cross-platform personal planning, execution, and accountability system with persistent study timers, midnight crossover attribution, and cross-device sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

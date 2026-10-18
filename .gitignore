@@ -1,0 +1,11 @@
+node_modules/
+build/
+dist/
+dist-electron/
+dist_electron/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+.aistudio/
