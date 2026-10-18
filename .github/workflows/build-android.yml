@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-android:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
 
     steps:
@@ -22,13 +22,32 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android platform and build-tools
+      - name: Set up Android SDK (uses runner's preinstalled SDK)
         run: |
-          yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          mkdir -p "$SDK" 2>/dev/null || true
+          if [ ! -w "$SDK" ]; then SDK="$HOME/android-sdk"; mkdir -p "$SDK"; fi
+
+          SDKMANAGER="$(command -v sdkmanager || true)"
+          if [ -z "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$SDK" /usr/local/lib/android/sdk -name sdkmanager -path '*bin*' 2>/dev/null | head -1)"
+          fi
+          if [ -z "$SDKMANAGER" ]; then
+            echo "sdkmanager not found - downloading Android command-line tools"
+            curl -fsSL -o /tmp/cmdtools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+            unzip -q /tmp/cmdtools.zip -d /tmp/cmdtools
+            mkdir -p "$SDK/cmdline-tools"
+            rm -rf "$SDK/cmdline-tools/latest"
+            mv /tmp/cmdtools/cmdline-tools "$SDK/cmdline-tools/latest"
+            SDKMANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
+          fi
+
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          echo "Using SDK at $SDK with $SDKMANAGER"
+
+          yes | "$SDKMANAGER" --sdk_root="$SDK" --licenses > /dev/null || true
+          "$SDKMANAGER" --sdk_root="$SDK" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
